@@ -1,12 +1,20 @@
+/**
+Vishaka B Sekar
+Back-end logic to implement methods in elasticsearch.js for REST api 
+@file:  db.js
+
+**/
+// call elasticsearch package
 var elasticsearch = require('elasticsearch');
 var client = new elasticsearch.Client({
-  host: 'localhost:9200',
+  host: 'localhost:9200',         //initialize and start the elasticearch server on port 9200
  
 });
 
-var indexName = 'stpp'
+var indexName = 'addressbookindex'  //index is the collection of contacts
+
 /**
-* Delete an existing index
+* Description. Delete an existing index
 */
 function deleteIndex() {  
     return client.indices.delete({
@@ -16,7 +24,8 @@ function deleteIndex() {
 exports.deleteIndex = deleteIndex;
 
 /**
-* create the index
+* Description. Creates an index 
+* @param: indexName
 */
 function initIndex() {  
     return client.indices.create({
@@ -26,7 +35,8 @@ function initIndex() {
 exports.initIndex = initIndex;
 
 /**
-* check if the index exists
+* Description. check if the index exists 
+* @param:indexName 
 */
 function indexExists() {  
     return client.indices.exists({
@@ -35,20 +45,23 @@ function indexExists() {
 }
 exports.indexExists = indexExists;  
 
-
-
+/**
+* Description. describes the number and type of fields in the index
+* Initializing the model
+* @param:indexName 
+*/
 function initMapping() {  
-    return client.indices.putMapping({
+    return client.indices.putMapping({  // initialize the mapping of JSON fields
         index: indexName,
         type: "contact",
         
         body: {
             properties: {
-                name: { type: "text" },
-                lastname: {type: "text"},
-                phone: { type: "long"},
-                email: {type: "keyword" , ignore_above: 5},
-                address: {type: "text"}
+                name: { type: "text" }, //firstname :  string
+                lastname: {type: "text"},// lastname:  string
+                phone: { type: "long"}, // phone number: number
+                email: {type: "keyword" , ignore_above: 5}, // email: sequence of characters
+                address: {type: "keyword"} // address: also a keyword
    
             }
         }
@@ -56,9 +69,18 @@ function initMapping() {
 }
 exports.initMapping = initMapping;
 
+/**
+* Description. returns a list of all contacts
+* @param: number of contacts per page
+* @param: offset of number of pages
+* @param: query string 
+* All paramters are passed in the GET request
+* Initializing the model
+* @param:indexName 
+*/
 function getAllContacts(request) { 
 
-var pageNum = parseInt(request.query.page);
+var pageNum = parseInt(request.query.page); //parse parameters from the req param
 var perPage = parseInt(request.query.pageSize);
 var userQuery = parseInt(request.query.query);
 
@@ -69,7 +91,7 @@ var searchParams = {
   size: perPage,
   body: {
           "query": {
-        "match_all": {}
+        "match_all": {} // elasticsearch query to return all records
     }
   }
 };
@@ -90,8 +112,14 @@ client.search(searchParams, function (err, res) {
 }
 exports.getAllContacts = getAllContacts;
 
+/**
+*Description. method to add a contact
+* @param: req.body 
+* All paramters are passed in the POST request body
+* 
+*/
 function addContact(input) { 
-    client.index({
+    client.index({           //client.index is the elasticsearch.js method to insert a document
             index: indexName,
             type: 'contact',
             body: {
@@ -104,21 +132,23 @@ function addContact(input) {
         }, function (error, response) {
           console.log(response);
         });
-    
-    
-
-	
+ 
 }
 exports.addContact = addContact;
 
+/**
+*Description. method to get  a contact
+* @param: name: req.body 
+* All paramters are passed in the GET request body
+*/
 function getContact(input){
-    client.search({
+    client.search({       //searching the elasticsearch index
         index: indexName,
         type: 'contact',
         body: {
             query: {
                 query_string:{
-                   query: input
+                   query: input // the query string is the name of the contact
                 }
             }
         }
@@ -126,7 +156,7 @@ function getContact(input){
          var results = resp.hits.hits.map(function(hit){
             return hit._source.name + " " + hit._source.lastname;
         });
-        console.log(results);
+        console.log(results); //returns the list of the search
         console.log(resp);
 
         
@@ -141,15 +171,13 @@ function getContact(input){
 
 exports.getContact = getContact;
 
-
-
-
-
-
+/**
+*Description. method to update a contact
+* @param: req.body.oldname - the name to be updated
+* @param: req.param.newname - new name
+*/
 function updateContact(input) { 
- 
-
-    client.updateByQuery({ 
+     client.updateByQuery({ 
            index: indexName,
            type: 'contact',
            body: { 
@@ -164,12 +192,13 @@ function updateContact(input) {
         }
     )
 
-
 }
 exports.updateContact = updateContact;
 
-
-
+/**
+*Description. method to delete a contact
+* @param: req.param.name - the name to be deleted
+* */
 function deleteContact(input) { 
   client.deleteByQuery({
           index: indexName,
