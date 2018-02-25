@@ -1,74 +1,78 @@
-// call the packages we need
+/**
+Vishaka B Sekar
+REST API server in Node.js
+@file:  server.js
+
+**/
+// call the packages needed
 var express    = require('express');        // call express
-var app        = express();                 // define our app using express
+var app        = express();                 // define  app using express
 var bodyParser = require('body-parser');
-
-// configure app to use bodyParser()
-// this will let us get the data from a POST
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.urlencoded({ extended: true }));// configure app to use bodyParser()
+                                                    //to  get the data from a POST
 app.use(bodyParser.json());
-
-var port = process.env.PORT || 8080;        // set our port
-
-// ROUTES FOR OUR API
-// =============================================================================
+var port = process.env.PORT || 8080;        // setting the port
 var router = express.Router();              // get an instance of the express Router
+var elastic = require('./model/db');
 
-// test route to make sure everything is working (accessed at GET http://localhost:8080/)
+// Routes for API------------------------------------
+/**
+*   Description. Default route
+**/
+ 
 router.get('/', function(req, res) {
-    res.json({ message: 'hooray! welcome to our api!' });   
+    res.json({ message: 'Address Book API' });   
 });
 
-var elastic = require('./model/db');
+/**
+*   Description. GET details of a contact with the name
+*   (accessed at GET http://localhost:8080/contact/:name)
+*   name is a req-parameter of the GET request
+**/
 router.route('/contact/:name')
-
-   
-    //  (accessed at GET http://localhost:8080/contact/:name)
-    .get(function(req, res) {
-         elastic.getContact(req.params.name, function(err, result) {
+   .get(function(req, res) {
+        elastic.getContact(req.params.name, function(err, result) {
             if (err)
                 res.send(err);
-
             res.json(result);
         });
     });
 
-
-
- router.route('/contact')
-
-   
-    //  (accessed at GET http://localhost:8080/) with user query
-    .get(function(req, res) {
-         elastic.getAllContacts(req, function(err, result) {
-            if (err)
-                res.send(err);
-
-            res.json(result);
-        });
-    });
-
+/**
+*   Description. GET list of all contacts
+*   (accessed at GET http://localhost:8080/contact/)
+**/
 router.route('/contact')
+   .get(function(req, res) {
+        elastic.getAllContacts(req, function(err, result) {
+            if (err)
+                res.send(err);
+            res.json(result);
+        });
+    });
 
-   
-    //  (accessed at POST http://localhost:8080/contact/)
+/**
+*   Description. POST query for inserting a new contact 
+*   accessed at http://localhost:8080/contact/  
+**/
+router.route('/contact')  
     .post(function(req, res) {
-    	
-         elastic.addContact(req.body, function(err, result) {
+    	elastic.addContact(req.body, function(err, result) {
             if (err)
                 res.send(err);
 
             res.json(result);
         });
-    });
+    }); 
 
+/**
+*   Description. PUT method to update contact 
+*   accessed at http://localhost:8080/contact/:name
+*   name is a req-param, the name of the contact to be updated 
+**/
 router.route('/contact/:name')
-
-   
-    //  (accessed at PUT http://localhost:8080/contact/)
     .put(function(req, res) {
-    	
-         elastic.updateContact(req.body, function(err, result) {
+    	elastic.updateContact(req.body, function(err, result) {
             if (err)
                 res.send(err);
 
@@ -76,27 +80,25 @@ router.route('/contact/:name')
         });
     });
 
+/**
+*   Description. DELETE method to deleted contact 
+*   accessed at http://localhost:8080/contact/:name
+*   name is a req-param, the name of the contact to be deleted 
+**/
  router.route('/contact/:name')
-
-   
-    //  (accessed at DELETE http://localhost:8080/contact/)
     .delete(function(req, res) {
-    	
-         elastic.deleteContact(req.body, function(err, result) {
+    	 elastic.deleteContact(req.body, function(err, result) {
             if (err)
                 res.send(err);
-
             res.json(result);
         });
     });
-// more routes for our API will happen here
 
-// REGISTER OUR ROUTES -------------------------------
 
+// Register the routes -------------------------------
 app.use('/', router);
 
-// START THE SERVER
-// =============================================================================
+// Start the server ---------------------------------
 app.listen(port);
-console.log('Magic happens on port ' + port);
+console.log('Starting AddressBook server on port ' + port);
 
