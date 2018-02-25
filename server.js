@@ -22,7 +22,9 @@ var elastic = require('./model/db');
  
 router.get('/', function(req, res) {
     res.json({ message: 'Address Book API' });   
-});
+    return elastic.initIndex().then(elastic.initMapping);
+    });
+
 
 /**
 *   Description. GET details of a contact with the name

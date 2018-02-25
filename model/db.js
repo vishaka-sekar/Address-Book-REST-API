@@ -4,65 +4,64 @@ var client = new elasticsearch.Client({
  
 });
 
-var indexName = 'myaddressbook'
+var indexName = 'stpp'
 /**
 * Delete an existing index
 */
-// function deleteIndex() {  
-//     return elasticClient.indices.delete({
-//         index: indexName
-//     });
-// }
-// exports.deleteIndex = deleteIndex;
+function deleteIndex() {  
+    return client.indices.delete({
+        index: indexName
+    });
+}
+exports.deleteIndex = deleteIndex;
 
-// /**
-// * create the index
-// */
-// function initIndex() {  
-//     return elasticClient.indices.create({
-//         index: indexName
-//     });
-// }
-// exports.initIndex = initIndex;
+/**
+* create the index
+*/
+function initIndex() {  
+    return client.indices.create({
+        index: indexName
+    });
+}
+exports.initIndex = initIndex;
 
-// /**
-// * check if the index exists
-// */
-// function indexExists() {  
-//     return elasticClient.indices.exists({
-//         index: indexName
-//     });
-// }
-// exports.indexExists = indexExists;  
+/**
+* check if the index exists
+*/
+function indexExists() {  
+    return client.indices.exists({
+        index: indexName
+    });
+}
+exports.indexExists = indexExists;  
 
-// indexExists.then(function (exists) {  
-//   if (exists) { 
-//     return deleteIndex(); 
-//   } 
-// }).then(initIndex);
 
-// function initMapping() {  
-//     return elasticClient.indices.putMapping({
-//         index: indexName,
-//         type: "contact",
-//         //ignore: [400]
-//         body: {
-//             properties: {
-//                 name: { type: "text" },
-                
-                
-//             }
-//         }
-//     });
-// }
-// exports.initMapping = initMapping;
+
+function initMapping() {  
+    return client.indices.putMapping({
+        index: indexName,
+        type: "contact",
+        
+        body: {
+            properties: {
+                name: { type: "text" },
+                lastname: {type: "text"},
+                phone: { type: "long"},
+                email: {type: "keyword" , ignore_above: 5},
+                address: {type: "text"}
+   
+            }
+        }
+    });
+}
+exports.initMapping = initMapping;
 
 function getAllContacts(request) { 
 
 var pageNum = parseInt(request.query.page);
 var perPage = parseInt(request.query.pageSize);
 var userQuery = parseInt(request.query.query);
-//console.log(parseInt(request.params.page));
+
 
 var searchParams = {
   index: indexName,
@@ -91,26 +90,26 @@ client.search(searchParams, function (err, res) {
 }
 exports.getAllContacts = getAllContacts;
 
-
-
-
-
-
 function addContact(input) { 
-	 client.index({
-  index: indexName,
-  type: 'contact',
-  body: {
-          name: input.name, 
-          location: input.location
-  }
-}, function (error, response) {
-  console.log(response);
-});
+    client.index({
+            index: indexName,
+            type: 'contact',
+            body: {
+                    name: input.name, 
+                    lastname: input.lastname,
+                    email: input.email,
+                    phone: parseInt(input.phone),
+                    address: input.address
+            }
+        }, function (error, response) {
+          console.log(response);
+        });
+    
+    
 
+	
 }
 exports.addContact = addContact;
-
 
 function getContact(input){
     client.search({
@@ -125,8 +124,9 @@ function getContact(input){
         }
     }).then(function (resp) {
          var results = resp.hits.hits.map(function(hit){
-            return hit._source.name + " " + hit._source.location;
+            return hit._source.name + " " + hit._source.lastname;
         });
+        console.log(results);
         console.log(resp);
 
         
@@ -135,9 +135,6 @@ function getContact(input){
         console.log(err.message);
         res.send(resp);
     });
-
-
-
 
  }
 
@@ -174,41 +171,20 @@ exports.updateContact = updateContact;
 
 
 function deleteContact(input) { 
-
-
-// client.search({
-//   index: indexName,
-//   type: 'contact',
-//  body: {
-//             "query": {
-//                 "query_string":{
-//                    "query": input.name
-//                 }
-//             }
-//         }
-// }).then(function (body) {
-//   var results = body.hits.hits.map(function(hit){
-//             return hit._id;
-//         });
-//   console.log(results);
-
-
-
-
-client.deleteByQuery({
-        index: indexName,
-        type: 'contact',
-        body: {
-           query: {
-               match: { name: input.name }
-           }
-        }
-    }, function (error, response) {
-        console.log(response);
-        if(error)
-         console.log(error);
-        
-    });
+  client.deleteByQuery({
+          index: indexName,
+          type: 'contact',
+          body: {
+             query: {
+                 match: { name: input.name }
+             }
+          }
+      }, function (error, response) {
+          console.log(response);
+          if(error)
+           console.log(error);
+          
+      });
 
 
 }
