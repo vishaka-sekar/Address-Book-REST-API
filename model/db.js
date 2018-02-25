@@ -95,7 +95,7 @@ var searchParams = {
     }
   }
 };
-console.log(searchParams);
+console.log('search parameters', searchParams);
 client.search(searchParams, function (err, res) {
   if (err) {
     // handle error
@@ -107,6 +107,11 @@ client.search(searchParams, function (err, res) {
     page: pageNum,
     pages: Math.ceil(res.hits.total / perPage)
   });
+
+   var results = res.hits.hits.map(function(hit){
+            return hit._source.name + " " + hit._source.lastname;
+        });
+    console.log(results);
 });
 
 }
@@ -205,7 +210,7 @@ function deleteContact(input) {
           type: 'contact',
           body: {
              query: {
-                 match: { name: input.name }
+                 match: { name: input }
              }
           }
       }, function (error, response) {

@@ -42,7 +42,7 @@ router.route('/contact/:name')
 
 /**
 *   Description. GET list of all contacts
-*   (accessed at GET http://localhost:8080/contact/)
+*   (accessed at http://localhost:8080/?pageSize={}&page={}&query={})
 **/
 router.route('/contact')
    .get(function(req, res) {
@@ -56,6 +56,7 @@ router.route('/contact')
 /**
 *   Description. POST query for inserting a new contact 
 *   accessed at http://localhost:8080/contact/  
+*   al params are passed in the req.body
 **/
 router.route('/contact')  
     .post(function(req, res) {
@@ -89,7 +90,7 @@ router.route('/contact/:name')
 **/
  router.route('/contact/:name')
     .delete(function(req, res) {
-    	 elastic.deleteContact(req.body, function(err, result) {
+    	 elastic.deleteContact(req.params.name, function(err, result) {
             if (err)
                 res.send(err);
             res.json(result);
