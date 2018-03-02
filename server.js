@@ -6,14 +6,23 @@ REST API server in Node.js
 **/
 // call the packages needed
 var express    = require('express');        // call express
-var app        = express();                 // define  app using express
+var app        = express(); 
+var elasticsearch = require('elasticsearch');
+var express= require('express');
+var router= express.Router();
+
+var client = new elasticsearch.Client({
+  host: 'localhost:9200',         //initialize and start the elasticearch server on port 9200
+ 
+});
+
+var indexName = 'addressbookindex'                 // define  app using express
 var bodyParser = require('body-parser');
 app.use(bodyParser.urlencoded({ extended: true }));// configure app to use bodyParser()
                                                     //to  get the data from a POST
 app.use(bodyParser.json());
 var port = process.env.PORT || 8080;        // setting the port
-var router = express.Router();              // get an instance of the express Router
-var elastic = require('./model/db');
+            
 
 // Routes for API------------------------------------
 /**
@@ -21,9 +30,35 @@ var elastic = require('./model/db');
 **/
  
 router.get('/', function(req, res) {
-    res.json({ message: 'Address Book API' });   
-    return elastic.initIndex().then(elastic.initMapping);
+      
+     return client.indices.putMapping({  // initialize the mapping of JSON fields
+        index: indexName,
+        type: "contact",
+        
+        body: {
+            properties: {
+                name: { type: "text" }, //firstname :  string
+                lastname: {type: "text"},// lastname:  string
+                phone: { type: "long"}, // phone number: number
+                email: {type: "keyword" , ignore_above: 5}, // email: sequence of characters
+                address: {type: "keyword"} // address: also a keyword
+   
+            }
+        }
+    }, function(err, response){
+        if(err){
+            console.log(err);
+            res.sendStatus(500);
+        }
+        else{
+            res.status(200).send({ message: 'Address Book API' }); 
+        }
+
+
+
     });
+
+});
 
 
 /**
@@ -32,13 +67,31 @@ router.get('/', function(req, res) {
 *   name is a req-parameter of the GET request
 **/
 router.route('/contact/:name')
-   .get(function(req, res) {
-        elastic.getContact(req.params.name, function(err, result) {
-            if (err)
-                res.send(err);
-            res.json(result);
+   .get( function(req, res) {
+            var input = req.params.name;
+
+            client.search({       //searching the elasticsearch index
+                index: indexName,
+                type: 'contact',
+                body: {
+                    query: {
+                        query_string:{
+                           query: input // the query string is the name of the contact
+                        }
+                    }
+                }
+        }).then(function (resp) {
+             var results = resp.hits.hits.map(function(hit){
+                return hit._source;
+            });
+            console.log(results); //returns the list of the search
+            console.log(resp);
+            res.status(200).send(results);
+
+            
         });
-    });
+
+     });
 
 /**
 *   Description. GET list of all contacts
@@ -46,11 +99,7 @@ router.route('/contact/:name')
 **/
 router.route('/contact')
    .get(function(req, res) {
-        elastic.getAllContacts(req, function(err, result) {
-            if (err)
-                res.send(err);
-            res.json(result);
-        });
+        //todo
     });
 
 /**
@@ -60,11 +109,28 @@ router.route('/contact')
 **/
 router.route('/contact')  
     .post(function(req, res) {
-    	elastic.addContact(req.body, function(err, result) {
-            if (err)
-                res.send(err);
 
-            res.json(result);
+    	  var input = req.body;
+            client.index({           //client.index is the elasticsearch.js method to insert a document
+                index: indexName,
+                type: 'contact',
+                body: {
+                        name: input.name, 
+                        lastname: input.lastname,
+                        email: input.email,
+                        phone: parseInt(input.phone),
+                        address: input.address
+                }
+        }, function (error,response) {
+              if(error) return console.log('ERROR',error);
+              else{
+                console.log(response);
+                res.sendStatus(200);
+                
+
+              }
+            
+          
         });
     }); 
 
@@ -75,12 +141,25 @@ router.route('/contact')
 **/
 router.route('/contact/:name')
     .put(function(req, res) {
-    	elastic.updateContact(req.body, function(err, result) {
-            if (err)
-                res.send(err);
+        input = req.body;
 
-            res.json(result);
-        });
+    	 client.updateByQuery({ 
+           index: indexName,
+           type: 'contact',
+           body: { 
+              "query": { "match": { "name": input.oldname } }, 
+              "script":  "ctx._source.name =  "+ "'"+input.newname +" ' "+";" 
+           }
+        }, function(err, response) { 
+            if (err) { 
+               console.log(err);
+               res.sendStatus(500);
+
+            } 
+            console.log(response);
+            res.status(200).send(response);
+        }
+    )
     });
 
 /**
@@ -90,17 +169,36 @@ router.route('/contact/:name')
 **/
  router.route('/contact/:name')
     .delete(function(req, res) {
-    	 elastic.deleteContact(req.params.name, function(err, result) {
-            if (err)
-                res.send(err);
-            res.json(result);
-        });
+
+        input = req.params.name;
+
+         client.deleteByQuery({
+              index: indexName,
+              type: 'contact',
+              body: {
+                 query: {
+                     match: { name: input }
+                 }
+              }
+      }, function (error, response) {
+          
+          if(error){
+            console.log(error);
+            res.sendStatus(500);
+          }
+           
+            else{
+                res.status(200).send(response);
+            }
+          
+      });
+    	 
     });
 
 
+module.exports = router;
 // Register the routes -------------------------------
 app.use('/', router);
-
 // Start the server ---------------------------------
 app.listen(port);
 console.log('Starting AddressBook server on port ' + port);
