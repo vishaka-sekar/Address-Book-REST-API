@@ -60,7 +60,7 @@ On your browser, type `http://localhost:9200`, a startup message indicates that 
 * DELETE `http://localhost:8080/contact/:{name}`
 
 ###### Testing 
-* The API was tested using the Postman tool. The screenshots, sample input and output of all test cases are included in the Screenshots.pdf file.
+* The API was tested using Mocha, Chai and Supertest.
 		
 
 
