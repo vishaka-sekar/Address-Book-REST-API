@@ -1,6 +1,7 @@
 var elasticsearch = require('elasticsearch');
 var express= require('express');
 var router= express.Router();
+bodyParser = require('body-parser');
 
 var client = new elasticsearch.Client({
   host: 'localhost:9200',         //initialize and start the elasticearch server on port 9200
@@ -25,9 +26,9 @@ router.get('/', function(req, res) {
             properties: {
                 name: { type: "text" }, //firstname :  string
                 lastname: {type: "text"},// lastname:  string
-                phone: { type: "long"}, // phone number: number
-                email: {type: "keyword" , ignore_above: 5}, // email: sequence of characters
-                address: {type: "keyword"} // address: also a keyword
+                phone: { type: "text"}, // phone number: number
+                email: {type: "text" }, // email: sequence of characters
+                address: {type: "text"} // address: also a keyword
    
             }
         }
@@ -70,7 +71,7 @@ router.route('/contact/:name')
              var results = resp.hits.hits.map(function(hit){
                 return hit._source;
             });
-            console.log(results); //returns the list of the search
+            console.log('GET results',results); //returns the list of the search
             console.log(resp);
             res.status(200).send(results);
 

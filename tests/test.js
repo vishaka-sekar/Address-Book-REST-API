@@ -13,35 +13,16 @@ describe('Contact', function(){
 
 	});
 
-	// it('should be an object with keys and values', function(done) {
-	//     api.get('/users/serena')
-	//     .set('Accept', 'application/json')
-	//     .expect(200)
-	//     .end(function(err, res) {
-	//       expect(res.body).to.have.property("name");
-	//       expect(res.body.name).to.not.equal(null);
-	//       expect(res.body).to.have.property("lastname");
-	//       expect(res.body.name).to.not.equal(null);
-	//       expect(res.body).to.have.property("email");
-	//       expect(res.body.email).to.not.equal(null);
-	//       expect(res.body).to.have.property("phone");
-	//       expect(res.body.phoneNumber).to.not.equal(null);
-	//       expect(res.body).to.have.property("address");
-	//       expect(res.body.role).to.not.equal(null);
-	//       done();
- //    });
-
- //  });
-
-	it('should return 200 response',  function(done){
+	
+	it('post should return 200 response',  function(done){
 
 		 api.post('/contact/')
 		    .set('Accept', 'application/x-www-form-urlencoded')
 		    .send({
-		      name: "John",
-		      lastname: "Doe",
+		      name: "Lori",
+		      lastname: "Ipsum",
 		      address: "OR",
-		      email: "jdoe@examaple.com",
+		      email: "lIpsum@examaple.com",
 		      phone: "123456"
 		    })
 		    //.expect('Content-Type', /json/)
@@ -50,6 +31,44 @@ describe('Contact', function(){
 
 		    
 		  });
+
+	
+   		it('tiny test case', function(done){
+       console.log('waiting 3 seconds');
+       setTimeout(function(){
+           console.log('waiting over.');
+           done();
+       	}, 1900)
+   	})
+
+
+	it('get response should be an array', function(done) {
+	    api.get('/contact/lorai')
+	    .set('Accept', 'application/json')
+	     .expect(200)
+	    .end(function(err, res) {
+	     	
+	      	expect(res.body).to.include.deep.members( [{ name: 'lorai ',
+    		lastname: 'Ipsum',
+    		email: 'lIpsum@examaple.com',
+    		phone: 123456,
+    		address: 'OR' }] );
+	     
+	      done();
+    });
+
+  });
+
+	it('put response should be an array', function(done) {
+	    api.put('/contact/lori')
+	    .set('Accept', 'application/json')
+
+	    .send({oldname: 'lora', newname: 'lorai'})
+	    .expect(200,done);
+	    
+
+  });
+
 
 
 
