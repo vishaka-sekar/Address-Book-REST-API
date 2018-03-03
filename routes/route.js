@@ -17,6 +17,7 @@ router.get('/', function(req, res) {
         type: "contact",
         body: {
             properties: {
+                // _id: {path: "name"},
                 name: { type: "text" }, //firstname :  string
                 lastname: {type: "text"},// lastname:  string
                 phone: { type: "text"}, // phone number: number
@@ -116,6 +117,7 @@ router.route('/contact')
                 index: indexName,
                 type: 'contact',
                 body: {
+                        // _id: input.name,
                         name: input.name, 
                         lastname: input.lastname,
                         email: input.email,
